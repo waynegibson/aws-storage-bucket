@@ -28,9 +28,20 @@ export interface StorageBucketStackProps extends cdk.StackProps {
   customConfig?: StorageBucketConfig;
   
   /**
+   * Stack description
+   */
+  description?: string;
+  
+  /**
    * Environment for deployment. Recommended for production use.
    */
   env?: cdk.Environment;
+
+ /**
+  * Environment context variable to determine the removal policy
+  * @default 'dev'
+  */
+  environment?: string;
 }
 
 export class StorageBucketStack extends cdk.Stack {
@@ -40,11 +51,24 @@ export class StorageBucketStack extends cdk.Stack {
   public readonly storageBucket: StorageBucket;
   
   constructor(scope: Construct, id: string, props?: StorageBucketStackProps) {
-    super(scope, id, props);
+    super(scope, id, {
+      ...props,
+      description: props?.description || `S3 bucket for ${props?.bucketType || 'media'} storage with intelligent tiering`,
+    });
 
-    // Get the environment from context
-    const environment = this.node.tryGetContext('environment');
+    // Get bucket configuration
+    const config = this.getBucketConfig(props);
     
+    // Create storage resources
+    this.storageBucket = this.createStorageBucket(config, props);
+    this.applyBucketPolicies(this.storageBucket);
+    this.defineOutputs(this.storageBucket);
+  }
+  
+  /**
+   * Get the appropriate bucket configuration based on bucket type
+   */
+  private getBucketConfig(props?: StorageBucketStackProps): StorageBucketConfig {
     // Determine which configuration to use based on bucket type
     let config: StorageBucketConfig;
     switch (props?.bucketType || 'media') {
@@ -67,28 +91,42 @@ export class StorageBucketStack extends cdk.Stack {
     }
     
     // Set the removal policy based on environment
-    config.removalPolicy = getRemovalPolicy(environment);
-
-    // Create the storage bucket with the selected configuration
-    this.storageBucket = new StorageBucket(this, 'Storage', {
+    config.removalPolicy = getRemovalPolicy(props?.environment || 'dev');
+    
+    return config;
+  }
+  
+  /**
+   * Create the storage bucket with the selected configuration
+   */
+  private createStorageBucket(config: StorageBucketConfig, props?: StorageBucketStackProps): StorageBucket {
+    return new StorageBucket(this, 'Storage', {
       config,
       bucketName: props?.bucketName || this.node.tryGetContext('bucketName'),
     });
-
-    // Apply bucket policies for security best practices
-    new BucketPolicy(this, 'StorageBucketPolicy', {
-      bucket: this.storageBucket.bucket,
+  }
+  
+  /**
+   * Apply security policies to the bucket
+   */
+  private applyBucketPolicies(storageBucket: StorageBucket): BucketPolicy {
+    return new BucketPolicy(this, 'StorageBucketPolicy', {
+      bucket: storageBucket.bucket,
     });
-
-    // Output the bucket name and ARN
+  }
+  
+  /**
+   * Define CloudFormation outputs
+   */
+  private defineOutputs(storageBucket: StorageBucket): void {
     new cdk.CfnOutput(this, 'StorageBucketName', {
-      value: this.storageBucket.bucket.bucketName,
+      value: storageBucket.bucket.bucketName,
       description: 'Name of the storage bucket',
       exportName: `${this.stackName}-BucketName`,
     });
 
     new cdk.CfnOutput(this, 'StorageBucketArn', {
-      value: this.storageBucket.bucket.bucketArn,
+      value: storageBucket.bucket.bucketArn,
       description: 'ARN of the storage bucket',
       exportName: `${this.stackName}-BucketArn`,
     });

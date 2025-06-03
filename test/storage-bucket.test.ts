@@ -104,4 +104,33 @@ describe('StorageBucketStack', () => {
       ]
     });
   });
+  
+  test('Bucket Uses RETAIN Removal Policy in Production Environment', () => {
+    // GIVEN
+    const app = new cdk.App();
+    
+    // WHEN
+    const stack = new StorageBucketStack(app, 'TestProductionBucketStack', {
+      bucketType: 'media',
+      environment: 'production'
+    });
+    
+    // THEN
+    const template = Template.fromStack(stack);
+    
+    // Verify bucket has RETAIN deletion policy (which means no DeletionPolicy property in the template)
+    template.hasResource('AWS::S3::Bucket', {
+      DeletionPolicy: 'Retain',
+      UpdateReplacePolicy: 'Retain'
+    });
+    
+    // Verify AutoDeleteObjects is not set to true
+    const bucketResources = template.findResources('AWS::S3::Bucket');
+    const bucketLogicalId = Object.keys(bucketResources)[0];
+    const bucketResource = bucketResources[bucketLogicalId];
+    expect(bucketResource.Properties.AutoDeleteObjects).toBeUndefined();
+    
+    // Make sure there's no Lambda for auto-deletion
+    template.resourceCountIs('AWS::Lambda::Function', 0);
+  });
 });
