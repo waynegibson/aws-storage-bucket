@@ -1,8 +1,6 @@
-# Welcome to your CDK TypeScript project
+# @spacecomx/aws-media-bucket
 
-This is a blank project for CDK development with TypeScript.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+The stack used to deploy AWS S3 bucket to manage media asset storage. 
 
 ## Useful commands
 
