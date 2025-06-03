@@ -12,7 +12,7 @@ AWS CDK stack for deploying configurable S3 buckets with intelligent tiering and
 
 ## Prerequisites
 
-- Node.js 18 or later
+- Node.js 22 or later
 - AWS CLI configured with appropriate credentials
 - AWS CDK v2.200.0
 
@@ -20,7 +20,7 @@ AWS CDK stack for deploying configurable S3 buckets with intelligent tiering and
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 ```
 
 ## Usage
