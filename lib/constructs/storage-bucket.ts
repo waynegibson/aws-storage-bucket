@@ -1,21 +1,22 @@
 import { Construct } from 'constructs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cdk from 'aws-cdk-lib';
+import { StorageBucketConfig } from '../../config/storage-bucket.config';
 
 export interface StorageBucketProps {
   /**
-   * The name of the bucket. If not specified, a name will be generated.
+   * Configuration for the storage bucket
    */
-  bucketName?: string;
+  config: StorageBucketConfig;
   
   /**
-   * Optional removal policy. Default is RETAIN for production safety.
+   * Optional bucket name override
    */
-  removalPolicy?: cdk.RemovalPolicy;
+  bucketName?: string;
 }
 
 /**
- * Construct for an S3 bucket optimized for storage storage with intelligent tiering
+ * Construct for a configurable S3 bucket with various storage optimizations
  */
 export class StorageBucket extends Construct {
   /**
@@ -23,46 +24,58 @@ export class StorageBucket extends Construct {
    */
   public readonly bucket: s3.Bucket;
 
-  constructor(scope: Construct, id: string, props: StorageBucketProps = {}) {
+  constructor(scope: Construct, id: string, props: StorageBucketProps) {
     super(scope, id);
 
-    // Use RETAIN as default removal policy for production safety
-    const removalPolicy = props.removalPolicy || cdk.RemovalPolicy.RETAIN;
+    const { config } = props;
+    
+    // Use provided bucket name or config bucket name
+    const bucketName = props.bucketName || config.bucketName;
+    
+    // Use provided removal policy or default based on config
+    const removalPolicy = config.removalPolicy || cdk.RemovalPolicy.RETAIN;
 
+    // Create the bucket with the specified configuration
     this.bucket = new s3.Bucket(this, 'Bucket', {
-      bucketName: props.bucketName,
-      removalPolicy: removalPolicy,
+      bucketName,
+      removalPolicy,
       autoDeleteObjects: removalPolicy === cdk.RemovalPolicy.DESTROY,
       
-      // Best practices for security
-      encryption: s3.BucketEncryption.S3_MANAGED,
+      // Security settings
+      encryption: config.encrypted !== false ? s3.BucketEncryption.S3_MANAGED : s3.BucketEncryption.UNENCRYPTED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
-      versioned: true,
+      versioned: config.versioned !== false,
       
-      // Enable intelligent tiering for cost optimization
-      intelligentTieringConfigurations: [
-        {
-          name: 'archive-infrequent-access',
-          archiveAccessTierTime: cdk.Duration.days(90),
-          deepArchiveAccessTierTime: cdk.Duration.days(180),
-        }
-      ],
+      // Intelligent tiering configuration
+      ...(config.intelligentTiering?.enabled !== false && {
+        intelligentTieringConfigurations: [
+          {
+            name: 'archive-infrequent-access',
+            archiveAccessTierTime: cdk.Duration.days(config.intelligentTiering?.archiveAccessTierDays || 90),
+            deepArchiveAccessTierTime: cdk.Duration.days(config.intelligentTiering?.deepArchiveAccessTierDays || 180),
+          }
+        ]
+      }),
       
-      // Enable lifecycle rules for optimizing storage costs
-      lifecycleRules: [
-        {
-          // Transition objects to intelligent tiering after 30 days
-          transitions: [
-            {
-              storageClass: s3.StorageClass.INTELLIGENT_TIERING,
-              transitionAfter: cdk.Duration.days(30),
-            }
-          ],
-          // Expire noncurrent versions after 90 days
-          noncurrentVersionExpiration: cdk.Duration.days(90),
-        }
-      ],
+      // Lifecycle rules
+      ...(config.lifecycle && {
+        lifecycleRules: [
+          {
+            // Transition objects to intelligent tiering
+            ...(config.intelligentTiering?.enabled !== false && {
+              transitions: [
+                {
+                  storageClass: s3.StorageClass.INTELLIGENT_TIERING,
+                  transitionAfter: cdk.Duration.days(config.lifecycle.transitionToIntelligentTieringDays || 30),
+                }
+              ]
+            }),
+            // Expire noncurrent versions
+            noncurrentVersionExpiration: cdk.Duration.days(config.lifecycle.noncurrentVersionExpirationDays || 90),
+          }
+        ]
+      }),
     });
   }
 }

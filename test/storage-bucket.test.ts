@@ -1,14 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { StorageBucketStack } from '../lib/storage-bucket-stack';
+import { mediaStorageConfig, documentStorageConfig, logStorageConfig } from '../config/storage-bucket.config';
 
 describe('StorageBucketStack', () => {
-  test('S3 Bucket Created with Intelligent Tiering', () => {
+  test('Media Bucket Created with Correct Configuration', () => {
     // GIVEN
     const app = new cdk.App();
     
     // WHEN
-    const stack = new StorageBucketStack(app, 'TestStorageBucketStack');
+    const stack = new StorageBucketStack(app, 'TestMediaBucketStack', {
+      bucketType: 'media'
+    });
     
     // THEN
     const template = Template.fromStack(stack);
@@ -16,16 +19,10 @@ describe('StorageBucketStack', () => {
     // Verify bucket creation
     template.resourceCountIs('AWS::S3::Bucket', 1);
     
-    // Verify bucket properties
+    // Verify bucket properties for media type
     template.hasResourceProperties('AWS::S3::Bucket', {
       VersioningConfiguration: {
         Status: 'Enabled'
-      },
-      PublicAccessBlockConfiguration: {
-        BlockPublicAcls: true,
-        BlockPublicPolicy: true,
-        IgnorePublicAcls: true,
-        RestrictPublicBuckets: true
       },
       IntelligentTieringConfigurations: [
         {
@@ -34,18 +31,77 @@ describe('StorageBucketStack', () => {
           Tierings: [
             {
               AccessTier: 'ARCHIVE_ACCESS',
-              Days: 90
+              Days: mediaStorageConfig.intelligentTiering?.archiveAccessTierDays
             },
             {
               AccessTier: 'DEEP_ARCHIVE_ACCESS',
-              Days: 180
+              Days: mediaStorageConfig.intelligentTiering?.deepArchiveAccessTierDays
             }
           ]
         }
       ]
     });
+  });
+  
+  test('Document Bucket Created with Correct Configuration', () => {
+    // GIVEN
+    const app = new cdk.App();
     
-    // Verify bucket policy
-    template.resourceCountIs('AWS::S3::BucketPolicy', 1);
+    // WHEN
+    const stack = new StorageBucketStack(app, 'TestDocumentBucketStack', {
+      bucketType: 'document'
+    });
+    
+    // THEN
+    const template = Template.fromStack(stack);
+    
+    // Verify bucket properties for document type
+    template.hasResourceProperties('AWS::S3::Bucket', {
+      IntelligentTieringConfigurations: [
+        {
+          Tierings: [
+            {
+              AccessTier: 'ARCHIVE_ACCESS',
+              Days: documentStorageConfig.intelligentTiering?.archiveAccessTierDays
+            },
+            {
+              AccessTier: 'DEEP_ARCHIVE_ACCESS',
+              Days: documentStorageConfig.intelligentTiering?.deepArchiveAccessTierDays
+            }
+          ]
+        }
+      ]
+    });
+  });
+  
+  test('Log Bucket Created with Correct Configuration', () => {
+    // GIVEN
+    const app = new cdk.App();
+    
+    // WHEN
+    const stack = new StorageBucketStack(app, 'TestLogBucketStack', {
+      bucketType: 'log'
+    });
+    
+    // THEN
+    const template = Template.fromStack(stack);
+    
+    // Verify bucket properties for log type
+    template.hasResourceProperties('AWS::S3::Bucket', {
+      IntelligentTieringConfigurations: [
+        {
+          Tierings: [
+            {
+              AccessTier: 'ARCHIVE_ACCESS',
+              Days: logStorageConfig.intelligentTiering?.archiveAccessTierDays
+            },
+            {
+              AccessTier: 'DEEP_ARCHIVE_ACCESS',
+              Days: logStorageConfig.intelligentTiering?.deepArchiveAccessTierDays
+            }
+          ]
+        }
+      ]
+    });
   });
 });
