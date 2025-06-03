@@ -54,10 +54,10 @@ npx cdk deploy -c bucketType=document -c bucketName=my-docs -c stackName=DocsSta
 
 ### Configuration Options
 
-- `bucketName`: Optional custom name for the S3 bucket
-- `stackName`: Custom name for the CloudFormation stack
-- `description`: Custom description for the CloudFormation stack
 - `bucketType`: Type of bucket to create (`media`, `document`, `log`)
+- `bucketName`: Optional custom name for the S3 bucket (defaults to `${bucketType}-storage-${environment}-${timestamp}` where `timestamp` is the current date in YYYYMMDD-HHmmss format)
+- `stackName`: Custom name for the CloudFormation stack (defaults to `${bucketType}-storage-bucket-${environment}`)
+- `description`: Custom description for the CloudFormation stack
 - `environment`: Set to 'production' to use RETAIN removal policy
 
 ## Bucket Types
@@ -95,3 +95,11 @@ npx cdk deploy -c bucketType=document -c bucketName=my-docs -c stackName=DocsSta
 * `npx cdk deploy`  deploy this stack to your default AWS account/region
 * `npx cdk diff`    compare deployed stack with current state
 * `npx cdk synth`   emits the synthesized CloudFormation template
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Contributors
+
+- [Wayne Gibson](https://github.com/waynegibson)
