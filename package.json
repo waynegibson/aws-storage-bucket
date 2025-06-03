@@ -1,9 +1,27 @@
 {
   "name": "@spacecomx/aws-storage-bucket",
   "version": "0.1.0",
-  "bin": {
-    "media-bucket": "bin/index.js"
+  "packageManager": "pnpm@10.11.0",
+  "description": "AWS S3 bucket management for storage of media, document and log files.",
+  "author": "Spacecomx, LLC",
+  "license": "MIT",
+  "main": "dist/bin/index.js",
+  "types": "dist/bin/index.d.ts",
+  "files": ["dist"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spacecomx/aws-storage-bucket.git"
   },
+  "keywords": [
+    "aws",
+    "s3",
+    "bucket",
+    "storage",
+    "media",
+    "documents",
+    "logs",
+    "cdk"
+  ],
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
