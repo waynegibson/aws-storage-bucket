@@ -93,8 +93,8 @@ export const documentStorageConfig: StorageBucketConfig = {
   encrypted: true,
   intelligentTiering: {
     enabled: true,
-    archiveAccessTierDays: 60,
-    deepArchiveAccessTierDays: 120
+    archiveAccessTierDays: 90,  // Minimum required by AWS
+    deepArchiveAccessTierDays: 180
   },
   lifecycle: {
     transitionToIntelligentTieringDays: 15,
@@ -110,8 +110,8 @@ export const logStorageConfig: StorageBucketConfig = {
   encrypted: true,
   intelligentTiering: {
     enabled: true,
-    archiveAccessTierDays: 30,
-    deepArchiveAccessTierDays: 90
+    archiveAccessTierDays: 90,  // Minimum required by AWS
+    deepArchiveAccessTierDays: 180
   },
   lifecycle: {
     transitionToIntelligentTieringDays: 7,
