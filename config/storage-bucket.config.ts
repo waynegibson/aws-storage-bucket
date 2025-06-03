@@ -125,7 +125,6 @@ export const logStorageConfig: StorageBucketConfig = {
  * @returns The appropriate removal policy
  */
 export function getRemovalPolicy(environment?: string): cdk.RemovalPolicy {
-  return environment === 'production' 
-    ? cdk.RemovalPolicy.RETAIN 
-    : cdk.RemovalPolicy.DESTROY;
+  const isProd = environment?.toLowerCase().includes('prod') ?? false;
+  return isProd ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY;
 }

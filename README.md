@@ -49,7 +49,11 @@ npx cdk deploy -c bucketType=media
 npx cdk deploy -c environment=production
 
 # Combine multiple options
-npx cdk deploy -c bucketType=document -c bucketName=my-docs -c stackName=DocsStack -c description="Document storage bucket"
+npx cdk deploy / 
+ -c bucketType=document /
+ -c bucketName=my-docs /
+ -c stackName=DocsStack /
+ -c description="Document storage bucket"
 ```
 
 ### Configuration Options
@@ -58,7 +62,7 @@ npx cdk deploy -c bucketType=document -c bucketName=my-docs -c stackName=DocsSta
 - `bucketName`: Optional custom name for the S3 bucket (defaults to `${bucketType}-storage-${environment}-${timestamp}` where `timestamp` is the current date in YYYYMMDD-HHmmss format)
 - `stackName`: Custom name for the CloudFormation stack (defaults to `${bucketType}-storage-bucket-${environment}`)
 - `description`: Custom description for the CloudFormation stack
-- `environment`: Set to 'production' to use RETAIN removal policy
+- `environment`: Set to 'prod' to use RETAIN removal policy
 
 ## Bucket Types
 
